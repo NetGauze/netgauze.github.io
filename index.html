@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetGauze — Weaving network protocols into one toolkit</title>
+    <meta name="description" content="High-performance Rust libraries for BGP, BMP, IPFIX, NetFlow V9, NETCONF, YANG Push, and UDP-Notif. Type-safe packet parsing, serialization, and a network telemetry collector.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80' fill='none'%3E%3Cg transform='matrix(1.255,0,0,1.255,-12.665,-3.862)'%3E%3Cline x1='29.334' y1='52.478' x2='55.035' y2='16.770' stroke='%236b8f71' stroke-width='1.895' stroke-linecap='round'/%3E%3Cline x1='19.213' y1='35.227' x2='63.092' y2='35.227' stroke='%23c97b4b' stroke-width='2.763' stroke-linecap='round'/%3E%3Cline x1='13.822' y1='52.478' x2='39.524' y2='16.770' stroke='%236b8f71' stroke-width='1.895' stroke-linecap='round'/%3E%3Cline x1='13.861' y1='46.733' x2='57.741' y2='46.733' stroke='%234f5d75' stroke-width='2.763' stroke-linecap='round'/%3E%3Cline x1='27.240' y1='23.722' x2='71.119' y2='23.722' stroke='%234f5d75' stroke-width='2.763' stroke-linecap='round'/%3E%3Cline x1='44.846' y1='52.478' x2='70.547' y2='16.770' stroke='%236b8f71' stroke-width='1.895' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --slate: #2d3142;
+            --warm-gray: #4f5d75;
+            --copper: #c97b4b;
+            --green: #6b8f71;
+            --green-light: #7ba882;
+            --cream: #f7f5f2;
+            --sand: #e8e4df;
+            --muted-blue: #8892a4;
+            --white: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--white);
+            color: var(--slate);
+            font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ── Nav ── */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--sand);
+            padding: 0 40px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--slate);
+        }
+
+        .nav-logo svg { flex-shrink: 0; }
+
+        .nav-wordmark {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: -0.4px;
+        }
+
+        .nav-wordmark span { font-weight: 400; }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--warm-gray);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--slate); }
+
+        .nav-links .github-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--slate);
+            color: var(--cream);
+            padding: 7px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .nav-links .github-btn:hover {
+            background: var(--warm-gray);
+            color: var(--white);
+        }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 140px 40px 80px;
+            text-align: center;
+            background: var(--cream);
+        }
+
+        .hero-icon {
+            margin: 0 auto 32px;
+            opacity: 0.9;
+        }
+
+        .hero h1 {
+            font-size: 3.2rem;
+            font-weight: 700;
+            letter-spacing: -1.5px;
+            line-height: 1.1;
+            margin-bottom: 8px;
+        }
+
+        .hero h1 span { font-weight: 400; }
+
+        .hero-tagline {
+            font-size: 0.78rem;
+            font-weight: 400;
+            letter-spacing: 2.2px;
+            text-transform: uppercase;
+            color: var(--warm-gray);
+            margin-bottom: 24px;
+        }
+
+        .hero-desc {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: var(--warm-gray);
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--slate);
+            color: var(--cream);
+        }
+
+        .btn-primary:hover { background: var(--warm-gray); color: var(--white); }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--slate);
+            border: 1px solid var(--sand);
+        }
+
+        .btn-secondary:hover { border-color: var(--warm-gray); }
+
+        .hero-install {
+            margin-top: 40px;
+            display: inline-block;
+            background: var(--slate);
+            color: var(--sand);
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            letter-spacing: -0.2px;
+            user-select: all;
+        }
+
+        .hero-install .kw { color: var(--copper); }
+        .hero-install .str { color: var(--green-light); }
+
+        /* ── Sections ── */
+        .section {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 80px 40px;
+        }
+
+        .section + .section { border-top: 1px solid var(--sand); }
+
+        .section-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--copper);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+            margin-bottom: 12px;
+        }
+
+        .section-desc {
+            color: var(--warm-gray);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 40px;
+            max-width: 600px;
+        }
+
+        /* ── Protocol Grid ── */
+        .protocol-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .protocol-card {
+            background: var(--cream);
+            border-radius: 14px;
+            padding: 28px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .protocol-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(45, 49, 66, 0.06);
+        }
+
+        .protocol-card h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .protocol-card p {
+            font-size: 0.85rem;
+            color: var(--warm-gray);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .protocol-card .crate-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .crate-tag {
+            display: inline-block;
+            background: var(--white);
+            border: 1px solid var(--sand);
+            color: var(--slate);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            padding: 3px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .crate-tag:hover {
+            border-color: var(--copper);
+            color: var(--copper);
+        }
+
+        /* ── Features ── */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 32px;
+        }
+
+        .feature {
+            text-align: left;
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--cream);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+
+        .feature h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            letter-spacing: -0.2px;
+        }
+
+        .feature p {
+            font-size: 0.82rem;
+            color: var(--warm-gray);
+            line-height: 1.6;
+        }
+
+        /* ── Collector Section ── */
+        .collector-block {
+            background: var(--slate);
+            border-radius: 16px;
+            padding: 48px;
+            color: var(--sand);
+        }
+
+        .collector-block h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--cream);
+            margin-bottom: 8px;
+            letter-spacing: -0.4px;
+        }
+
+        .collector-block p {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--muted-blue);
+            margin-bottom: 20px;
+            max-width: 540px;
+        }
+
+        .collector-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .collector-col h4 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--copper);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .collector-col ul {
+            list-style: none;
+            font-size: 0.82rem;
+            color: var(--sand);
+            line-height: 1.8;
+        }
+
+        .collector-col ul li::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: var(--green-light);
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .collector-code {
+            background: rgba(0, 0, 0, 0.25);
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--sand);
+            overflow-x: auto;
+        }
+
+        .collector-code .prompt { color: var(--green-light); }
+        .collector-code .flag { color: var(--copper); }
+
+        /* ── Quick Start ── */
+        .quickstart-steps {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .quickstart-step {
+            background: var(--cream);
+            border-radius: 14px;
+            padding: 28px;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: var(--slate);
+            color: var(--cream);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+
+        .quickstart-step h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: -0.2px;
+        }
+
+        .quickstart-step pre {
+            background: var(--slate);
+            color: var(--sand);
+            padding: 14px 18px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            line-height: 1.7;
+            overflow-x: auto;
+        }
+
+        .quickstart-step pre .kw { color: var(--copper); }
+        .quickstart-step pre .str { color: var(--green-light); }
+        .quickstart-step pre .cmt { color: var(--muted-blue); }
+
+        /* ── Footer ── */
+        footer {
+            border-top: 1px solid var(--sand);
+            padding: 40px;
+            text-align: center;
+        }
+
+        .footer-inner {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: var(--warm-gray);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+
+        .footer-links a {
+            font-size: 0.82rem;
+            color: var(--warm-gray);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: var(--copper); }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            nav { padding: 0 20px; }
+            .hero { padding: 120px 24px 60px; }
+            .hero h1 { font-size: 2.2rem; }
+            .section { padding: 56px 24px; }
+            .collector-details { grid-template-columns: 1fr; }
+            .collector-block { padding: 32px 24px; }
+            .quickstart-steps { grid-template-columns: 1fr; }
+            .footer-inner { flex-direction: column; gap: 16px; }
+            .nav-links .hide-mobile { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+    <a href="/" class="nav-logo">
+        <svg width="28" height="28" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g transform="matrix(1.255,0,0,1.255,-12.665,-3.862)">
+                <line x1="29.334" y1="52.478" x2="55.035" y2="16.770" stroke="#6b8f71" stroke-width="1.895" stroke-linecap="round"/>
+                <line x1="19.213" y1="35.227" x2="63.092" y2="35.227" stroke="#c97b4b" stroke-width="2.763" stroke-linecap="round"/>
+                <line x1="13.822" y1="52.478" x2="39.524" y2="16.770" stroke="#6b8f71" stroke-width="1.895" stroke-linecap="round"/>
+                <line x1="13.861" y1="46.733" x2="57.741" y2="46.733" stroke="#4f5d75" stroke-width="2.763" stroke-linecap="round"/>
+                <line x1="27.240" y1="23.722" x2="71.119" y2="23.722" stroke="#4f5d75" stroke-width="2.763" stroke-linecap="round"/>
+                <line x1="44.846" y1="52.478" x2="70.547" y2="16.770" stroke="#6b8f71" stroke-width="1.895" stroke-linecap="round"/>
+            </g>
+        </svg>
+        <div class="nav-wordmark">Net<span>Gauze</span></div>
+    </a>
+    <ul class="nav-links">
+        <li><a href="#protocols" class="hide-mobile">Protocols</a></li>
+        <li><a href="#collector" class="hide-mobile">Collector</a></li>
+        <li><a href="#quickstart" class="hide-mobile">Quick Start</a></li>
+        <li><a href="https://docs.rs/netgauze-bgp-pkt" class="hide-mobile">Docs</a></li>
+        <li><a href="https://github.com/NetGauze/NetGauze" class="github-btn">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            GitHub
+        </a></li>
+    </ul>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+    <div class="hero-icon">
+        <svg width="72" height="72" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g transform="matrix(1.255,0,0,1.255,-12.665,-3.862)">
+                <line x1="29.334" y1="52.478" x2="55.035" y2="16.770" stroke="#6b8f71" stroke-width="1.895" stroke-linecap="round"/>
+                <line x1="19.213" y1="35.227" x2="63.092" y2="35.227" stroke="#c97b4b" stroke-width="2.763" stroke-linecap="round"/>
+                <line x1="13.822" y1="52.478" x2="39.524" y2="16.770" stroke="#6b8f71" stroke-width="1.895" stroke-linecap="round"/>
+                <line x1="13.861" y1="46.733" x2="57.741" y2="46.733" stroke="#4f5d75" stroke-width="2.763" stroke-linecap="round"/>
+                <line x1="27.240" y1="23.722" x2="71.119" y2="23.722" stroke="#4f5d75" stroke-width="2.763" stroke-linecap="round"/>
+                <line x1="44.846" y1="52.478" x2="70.547" y2="16.770" stroke="#6b8f71" stroke-width="1.895" stroke-linecap="round"/>
+            </g>
+        </svg>
+    </div>
+    <h1>Net<span>Gauze</span></h1>
+    <p class="hero-tagline">Weaving network protocols into one toolkit</p>
+    <p class="hero-desc">
+        NetGauze is a set of Rust libraries and programs for network monitoring, telemetry collection, and protocol analysis. 
+        It provides high-performance, type-safe packet parsing and serialization for key network protocols, along with a network telemetry collector daemon that can be used to collect and process telemetry data from multiple sources.
+    </p>
+    <div class="hero-actions">
+        <a href="#quickstart" class="btn btn-primary">Get Started</a>
+        <a href="https://github.com/NetGauze/NetGauze" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            View on GitHub
+        </a>
+    </div>
+    <div class="hero-install">
+        <span class="kw">cargo</span> add <span class="str">netgauze-bgp-pkt</span>
+    </div>
+</section>
+
+<!-- ── Protocols ── -->
+<section class="section" id="protocols">
+    <div class="section-label">Protocol Libraries</div>
+    <h2>Production-grade protocol support</h2>
+    <p class="section-desc">
+        Each protocol gets a dedicated packet crate for representation and wire format serialization,
+        plus service crates for building receivers and speakers. All parsers are continuously fuzz-tested.
+    </p>
+
+    <div class="protocol-grid">
+        <div class="protocol-card">
+            <h3>BGP</h3>
+            <p>BGP-4, MP-BGP (IPv4/IPv6 Unicast &amp; Multicast, MPLS VPN, EVPN, BGP-LS), 4-octet ASN, Add-Path, Route Refresh, Extended Messages, and communities.</p>
+            <div class="crate-links">
+                <a href="https://crates.io/crates/netgauze-bgp-pkt" class="crate-tag">bgp-pkt</a>
+                <a href="https://crates.io/crates/netgauze-bgp-speaker" class="crate-tag">bgp-speaker</a>
+            </div>
+        </div>
+
+        <div class="protocol-card">
+            <h3>BMP</h3>
+            <p>BMP v3 and v4 with all message types and peer states. Includes a service building block for receiving BMP messages.</p>
+            <div class="crate-links">
+                <a href="https://crates.io/crates/netgauze-bmp-pkt" class="crate-tag">bmp-pkt</a>
+                <a href="https://crates.io/crates/netgauze-bmp-service" class="crate-tag">bmp-service</a>
+            </div>
+        </div>
+
+        <div class="protocol-card">
+            <h3>IPFIX &amp; NetFlow V9</h3>
+            <p>IANA IPFIX Information Elements code generation, enterprise-specific IEs (VMware, Nokia), and full wire format support.</p>
+            <div class="crate-links">
+                <a href="https://crates.io/crates/netgauze-flow-pkt" class="crate-tag">flow-pkt</a>
+                <a href="https://crates.io/crates/netgauze-flow-service" class="crate-tag">flow-service</a>
+            </div>
+        </div>
+
+        <div class="protocol-card">
+            <h3>UDP-Notif</h3>
+            <p>Packet representation and wire format serialization/deserialization with a service building block for receiving messages.</p>
+            <div class="crate-links">
+                <a href="https://crates.io/crates/netgauze-udp-notif-pkt" class="crate-tag">udp-notif-pkt</a>
+                <a href="https://crates.io/crates/netgauze-udp-notif-service" class="crate-tag">udp-notif-service</a>
+            </div>
+        </div>
+
+        <div class="protocol-card">
+            <h3>YANG Push</h3>
+            <p>Data models and YANG validation for network configuration and telemetry push notifications.</p>
+            <div class="crate-links">
+                <a href="https://github.com/NetGauze/NetGauze/tree/main/crates/yang-push" class="crate-tag">yang-push</a>
+            </div>
+        </div>
+
+        <div class="protocol-card">
+            <h3>NETCONF</h3>
+            <p>Protocol types, XML parsing, and SSH client wiring for NETCONF-based network management.</p>
+            <div class="crate-links">
+                <a href="https://github.com/NetGauze/NetGauze/tree/main/crates/netconf-proto" class="crate-tag">netconf-proto</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Design Principles ── -->
+<section class="section" id="design">
+    <div class="section-label">Design Principles</div>
+    <h2>Built for correctness</h2>
+    <p class="section-desc">
+        NetGauze leverages Rust's type system to ensure protocol correctness at compile time.
+        Packets are rich, immutable data structures where invalid states are unrepresentable.
+    </p>
+
+    <div class="features-grid">
+        <div class="feature">
+            <div class="feature-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L2 7v6l8 5 8-5V7l-8-5z" stroke="#6b8f71" stroke-width="1.5" stroke-linejoin="round"/><path d="M2 7l8 5 8-5" stroke="#6b8f71" stroke-width="1.5"/><line x1="10" y1="12" x2="10" y2="18" stroke="#6b8f71" stroke-width="1.5"/></svg>
+            </div>
+            <h3>Immutable PDUs</h3>
+            <p>Packets are immutable once constructed, preventing accidental mutation and ensuring thread safety.</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10h14M10 3v14" stroke="#c97b4b" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="10" r="7" stroke="#c97b4b" stroke-width="1.5"/></svg>
+            </div>
+            <h3>Enum-driven correctness</h3>
+            <p>Protocol constants as enums catch invalid values at compile time rather than runtime.</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="6" height="6" rx="1" stroke="#4f5d75" stroke-width="1.5"/><rect x="12" y="11" width="6" height="6" rx="1" stroke="#4f5d75" stroke-width="1.5"/><path d="M8 6h4v5h-1" stroke="#4f5d75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Separated concerns</h3>
+            <p>Packet representation is independent of wire format parsing and service integration.</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 16l3-4 3 2 3-5 3 3" stroke="#6b8f71" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="2" y="2" width="16" height="16" rx="2" stroke="#6b8f71" stroke-width="1.5"/></svg>
+            </div>
+            <h3>Fuzz-tested</h3>
+            <p>All protocol parsers are continuously fuzzed via cargo-fuzz to catch edge cases.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ── Collector ── -->
+<section class="section" id="collector">
+    <div class="section-label">Collector Daemon</div>
+    <h2>Network telemetry collector</h2>
+    <p class="section-desc">
+        A deployable service that ties the protocol libraries together for production network telemetry collection.
+    </p>
+
+    <div class="collector-block">
+        <h3>netgauze-collector</h3>
+        <p>Collect, aggregate, and publish network telemetry data from multiple sources with a single daemon.</p>
+        <div class="collector-details">
+            <div class="collector-col">
+                <h4>Inputs</h4>
+                <ul>
+                    <li>IPFIX / NetFlow V9</li>
+                    <li>UDP-Notif</li>
+                    <li>YANG Push</li>
+                    <li>Kafka (enrichment)</li>
+                    <li>BMP &amp; BGP (WIP)</li>
+                </ul>
+            </div>
+            <div class="collector-col">
+                <h4>Features</h4>
+                <ul>
+                    <li>Kafka publishing (Avro, JSON, YANG)</li>
+                    <li>OpenTelemetry metrics (OTLP)</li>
+                    <li>Flow aggregation &amp; enrichment</li>
+                    <li>YAML configuration</li>
+                    <li>RPM packaging</li>
+                </ul>
+            </div>
+        </div>
+        <div class="collector-code">
+            <span class="prompt">$</span> cargo run <span class="flag">-p</span> netgauze-collector <span class="flag">--</span> /path/to/config.yaml
+        </div>
+    </div>
+</section>
+
+<!-- ── Quick Start ── -->
+<section class="section" id="quickstart">
+    <div class="section-label">Quick Start</div>
+    <h2>Up and running in minutes</h2>
+    <p class="section-desc">
+        Add the crate you need and start parsing protocol messages from bytes.
+    </p>
+
+    <div class="quickstart-steps">
+        <div class="quickstart-step">
+            <div class="step-number">1</div>
+            <h3>Add the dependency</h3>
+            <pre><span class="cmt"># Cargo.toml</span>
+[<span class="kw">dependencies</span>]
+netgauze-bgp-pkt = <span class="str">"0.9"</span></pre>
+        </div>
+        <div class="quickstart-step">
+            <div class="step-number">2</div>
+            <h3>Parse a BGP message</h3>
+            <pre><span class="kw">use</span> netgauze_bgp_pkt::BgpMessage;
+<span class="kw">use</span> netgauze_bgp_pkt::wire
+    ::deserializer::BgpParsingContext;
+<span class="kw">use</span> netgauze_parse_utils
+    ::{ReadablePduWithOneInput, Span};
+
+<span class="kw">let</span> raw: &amp;[u8] = &amp;[<span class="cmt">/* bytes */</span>];
+<span class="kw">let</span> span = Span::new(raw);
+<span class="kw">let mut</span> ctx = BgpParsingContext::default();
+<span class="kw">let</span> (_, msg) =
+    BgpMessage::from_wire(span, &amp;<span class="kw">mut</span> ctx)
+    .unwrap();</pre>
+        </div>
+    </div>
+</section>
+
+<!-- ── Tools ── -->
+<section class="section" id="tools">
+    <div class="section-label">Tools</div>
+    <h2>PCAP Decoder</h2>
+    <p class="section-desc">
+        Swiss army knife CLI to decode BGP, BMP, IPFIX/NetFlow, and UDP-Notif from PCAP files into JSON Lines format.
+    </p>
+
+    <div class="quickstart-step" style="max-width: 640px;">
+        <pre><span class="prompt" style="color: #7ba882;">$</span> cargo run <span class="kw">-p</span> netgauze-pcap-decoder <span class="kw">--</span> \
+    <span class="kw">--protocol</span> bmp \
+    <span class="kw">--ports</span> <span class="str">11019</span> \
+    input.pcap <span class="kw">-o</span> output.jsonl</pre>
+    </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+    <div class="footer-inner">
+        <div class="footer-left">
+            <svg width="20" height="20" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g transform="matrix(1.255,0,0,1.255,-12.665,-3.862)">
+                    <line x1="29.334" y1="52.478" x2="55.035" y2="16.770" stroke="#6b8f71" stroke-width="1.895" stroke-linecap="round"/>
+                    <line x1="19.213" y1="35.227" x2="63.092" y2="35.227" stroke="#c97b4b" stroke-width="2.763" stroke-linecap="round"/>
+                    <line x1="13.822" y1="52.478" x2="39.524" y2="16.770" stroke="#6b8f71" stroke-width="1.895" stroke-linecap="round"/>
+                    <line x1="13.861" y1="46.733" x2="57.741" y2="46.733" stroke="#4f5d75" stroke-width="2.763" stroke-linecap="round"/>
+                    <line x1="27.240" y1="23.722" x2="71.119" y2="23.722" stroke="#4f5d75" stroke-width="2.763" stroke-linecap="round"/>
+                    <line x1="44.846" y1="52.478" x2="70.547" y2="16.770" stroke="#6b8f71" stroke-width="1.895" stroke-linecap="round"/>
+                </g>
+            </svg>
+            NetGauze &mdash; Apache-2.0
+        </div>
+        <ul class="footer-links">
+            <li><a href="https://github.com/NetGauze/NetGauze">GitHub</a></li>
+            <li><a href="https://crates.io/search?q=netgauze">crates.io</a></li>
+            <li><a href="https://docs.rs/netgauze-bgp-pkt">docs.rs</a></li>
+        </ul>
+    </div>
+</footer>
+
+</body>
+</html>
