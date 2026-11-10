@@ -192,6 +192,22 @@
         .hero-install .kw { color: var(--copper); }
         .hero-install .str { color: var(--green-light); }
 
+        .hero-release {
+            display: block;
+            margin-top: 16px;
+            font-size: 0.82rem;
+            color: var(--warm-gray);
+        }
+
+        .hero-release a {
+            color: var(--copper);
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .hero-release a:hover,
+        .hero-release a:focus-visible { text-decoration: underline; }
+
         /* ── Sections ── */
         .section {
             max-width: 1000px;
@@ -548,6 +564,9 @@
     <div class="hero-install">
         <span class="kw">cargo</span> add <span class="str">netgauze-bgp-pkt</span>
     </div>
+    <p class="hero-release">
+        Latest release: <a href="https://github.com/NetGauze/NetGauze/releases/tag/v0.14.0">v0.14.0 release notes</a>
+    </p>
 </section>
 
 <!-- ── Protocols ── -->
@@ -562,7 +581,7 @@
     <div class="protocol-grid">
         <div class="protocol-card">
             <h3>BGP</h3>
-            <p>BGP-4, MP-BGP (IPv4/IPv6 Unicast &amp; Multicast, MPLS VPN, EVPN, BGP-LS), 4-octet ASN, Add-Path, Route Refresh, Extended Messages, and communities.</p>
+            <p>BGP-4, MP-BGP (IPv4/IPv6 Unicast &amp; Multicast, MPLS VPN, EVPN, BGP-LS), 4-octet ASN, Add-Path, Paths-Limit, Route Refresh, Extended Messages, and communities.</p>
             <div class="crate-links">
                 <a href="https://crates.io/crates/netgauze-bgp-pkt" class="crate-tag">bgp-pkt</a>
                 <a href="https://crates.io/crates/netgauze-bgp-speaker" class="crate-tag">bgp-speaker</a>
@@ -598,9 +617,9 @@
 
         <div class="protocol-card">
             <h3>YANG Push</h3>
-            <p>Data models and YANG validation for network configuration and telemetry push notifications.</p>
+            <p>Data models and YANG validation for telemetry push notifications, including the IETF telemetry message and validation of the pushed data against the device's schemas.</p>
             <div class="crate-links">
-                <a href="https://github.com/NetGauze/NetGauze/tree/main/crates/yang-push" class="crate-tag">yang-push</a>
+                <a href="https://crates.io/crates/netgauze-yang-push" class="crate-tag">yang-push</a>
             </div>
         </div>
 
@@ -608,7 +627,7 @@
             <h3>NETCONF</h3>
             <p>Protocol types, XML parsing, and SSH client wiring for NETCONF-based network management.</p>
             <div class="crate-links">
-                <a href="https://github.com/NetGauze/NetGauze/tree/main/crates/netconf-proto" class="crate-tag">netconf-proto</a>
+                <a href="https://crates.io/crates/netgauze-netconf-proto" class="crate-tag">netconf-proto</a>
             </div>
         </div>
     </div>
@@ -708,7 +727,8 @@
             <h3>Add the dependency</h3>
             <pre><span class="cmt"># Cargo.toml</span>
 [<span class="kw">dependencies</span>]
-netgauze-bgp-pkt = <span class="str">"0.9"</span></pre>
+netgauze-bgp-pkt = <span class="str">"0.14"</span>
+netgauze-parse-utils = <span class="str">"0.14"</span></pre>
         </div>
         <div class="quickstart-step">
             <div class="step-number">2</div>
@@ -716,15 +736,20 @@ netgauze-bgp-pkt = <span class="str">"0.9"</span></pre>
             <pre><span class="kw">use</span> netgauze_bgp_pkt::BgpMessage;
 <span class="kw">use</span> netgauze_bgp_pkt::wire
     ::deserializer::BgpParsingContext;
-<span class="kw">use</span> netgauze_parse_utils
-    ::{ReadablePduWithOneInput, Span};
+<span class="kw">use</span> netgauze_parse_utils::reader::SliceReader;
+<span class="kw">use</span> netgauze_parse_utils::traits
+    ::ParseFromWithOneInput;
 
-<span class="kw">let</span> raw: &amp;[u8] = &amp;[<span class="cmt">/* bytes */</span>];
-<span class="kw">let</span> span = Span::new(raw);
+<span class="cmt">// A KEEPALIVE: marker, length 19, type 4</span>
+<span class="kw">let mut</span> raw = vec![<span class="str">0xff</span>; <span class="str">16</span>];
+raw.extend([<span class="str">0</span>, <span class="str">19</span>, <span class="str">4</span>]);
+
+<span class="kw">let mut</span> reader = SliceReader::new(&amp;raw);
 <span class="kw">let mut</span> ctx = BgpParsingContext::default();
-<span class="kw">let</span> (_, msg) =
-    BgpMessage::from_wire(span, &amp;<span class="kw">mut</span> ctx)
-    .unwrap();</pre>
+<span class="kw">let</span> msg = BgpMessage::parse(
+    &amp;<span class="kw">mut</span> reader, &amp;<span class="kw">mut</span> ctx,
+).unwrap();
+assert_eq!(msg, BgpMessage::KeepAlive);</pre>
         </div>
     </div>
 </section>
@@ -741,7 +766,8 @@ netgauze-bgp-pkt = <span class="str">"0.9"</span></pre>
         <pre><span class="prompt" style="color: #7ba882;">$</span> cargo run <span class="kw">-p</span> netgauze-pcap-decoder <span class="kw">--</span> \
     <span class="kw">--protocol</span> bmp \
     <span class="kw">--ports</span> <span class="str">11019</span> \
-    input.pcap <span class="kw">-o</span> output.jsonl</pre>
+    <span class="kw">--input</span> input.pcap \
+    <span class="kw">--output</span> output.jsonl</pre>
     </div>
 </section>
 
